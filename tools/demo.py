@@ -18,15 +18,6 @@ from siamban.utils.model_load import load_pretrain
 
 torch.set_num_threads(1)
 
-parser = argparse.ArgumentParser(description='tracking demo')
-parser.add_argument('--config', type=str, help='config file')
-parser.add_argument('--snapshot', type=str, help='model name')
-parser.add_argument('--video_name', default='', type=str,
-                    help='videos or image files')
-parser.add_argument('--save', action='store_true',
-        help='whether visualzie result')
-args = parser.parse_args()
-
 
 def get_frames(video_name):
     if not video_name:
@@ -59,7 +50,7 @@ def get_frames(video_name):
             yield frame
 
 
-def main():
+def main(args):
     # load config
     cfg.merge_from_file(args.config)
     cfg.CUDA = torch.cuda.is_available() and cfg.CUDA
@@ -134,4 +125,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='tracking demo')
+    parser.add_argument('--config', type=str, help='config file')
+    parser.add_argument('--snapshot', type=str, help='model name')
+    parser.add_argument('--video_name', default='', type=str,
+                        help='videos or image files')
+    parser.add_argument('--save', action='store_true',help='whether visualzie result')
+    args = parser.parse_args()
+    main(args)

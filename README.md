@@ -82,6 +82,11 @@ python ../../tools/eval.py 	 \
 
 See [TRAIN.md](TRAIN.md) for detailed instruction.
 
+### build doc
+```shell
+./build_doc.sh
+```
+
 ## License
 
 This project is released under the [Apache 2.0 license](LICENSE). 
