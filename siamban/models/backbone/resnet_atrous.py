@@ -18,6 +18,15 @@ class BasicBlock(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1,
                  downsample=None, dilation=1):
+        """
+        ResNet基础结构单元
+        Args:
+            inplanes ([type]): [description]
+            planes ([type]): [description]
+            stride (int, optional): [description]. Defaults to 1.
+            downsample ([type], optional): [description]. 下采样函数，一般都是直接相加
+            dilation (int, optional): 空洞卷积率. Defaults to 1.
+        """
         super(BasicBlock, self).__init__()
         padding = 2 - stride
 
@@ -49,7 +58,6 @@ class BasicBlock(nn.Module):
 
         out = self.conv2(out)
         out = self.bn2(out)
-
         if self.downsample is not None:
             residual = self.downsample(x)
 
@@ -64,6 +72,15 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1,
                  downsample=None, dilation=1):
+        """
+        ReNet瓶颈结构
+        Args:
+            inplanes ([type]): [description]
+            planes ([type]): [description]
+            stride (int, optional): [description]. Defaults to 1.
+            downsample ([type], optional): [description]. Defaults to None.
+            dilation (int, optional): [description]. Defaults to 1.
+        """
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -112,21 +129,33 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, layers, used_layers):
+        """
+        resnet网络构造模型
+        Args:
+            block ([type]): [description]
+            layers ([type]): [description]
+            used_layers ([type]): [description]
+        使用示例：
+            ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+        """
         self.inplanes = 64
         super(ResNet, self).__init__()
+        # 这里的7*7可以换成3*3
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0,  # 3
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
+        # 注意这里尺寸减半
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
+        # 尺寸减半
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
 
         self.feature_size = 128 * block.expansion
         self.used_layers = used_layers
         layer3 = True if 3 in used_layers or 4 in used_layers else False
         layer4 = True if 4 in used_layers else False
-
+        # 注意这里使用了空洞卷积增大了视野
         if layer3:
             self.layer3 = self._make_layer(block, 256, layers[2],
                                            stride=1, dilation=2)  # 15x15, 7x7
@@ -140,7 +169,7 @@ class ResNet(nn.Module):
             self.feature_size = 512 * block.expansion
         else:
             self.layer4 = lambda x: x  # identity
-
+        # 这里进行网络权重初始化
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -150,9 +179,22 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
+        """
+        创建ResNet相关层
+        Args:
+            block ([type]): 结构单元，瓶颈结构/残差结构
+            planes (int): 输出通道数目
+            blocks (int): 数量 
+            stride (int, optional): 步长. Defaults to 1.
+            dilation (int, optional): 空洞率. Defaults to 1.
+
+        Returns:
+            [type]: 卷积操作层
+        """
         downsample = None
         dd = dilation
         if stride != 1 or self.inplanes != planes * block.expansion:
+            # 如果步长为1构建1x1设置下采样层
             if stride == 1 and dilation == 1:
                 downsample = nn.Sequential(
                     nn.Conv2d(self.inplanes, planes * block.expansion,
@@ -160,12 +202,14 @@ class ResNet(nn.Module):
                     nn.BatchNorm2d(planes * block.expansion),
                 )
             else:
+                # 计算扩展边缘
                 if dilation > 1:
                     dd = dilation // 2
                     padding = dd
                 else:
                     dd = 1
                     padding = 0
+                # 设计下采样层
                 downsample = nn.Sequential(
                     nn.Conv2d(self.inplanes, planes * block.expansion,
                               kernel_size=3, stride=stride, bias=False,
@@ -174,9 +218,12 @@ class ResNet(nn.Module):
                 )
 
         layers = []
+        # 首先添加存在下采样的下采样卷集成
         layers.append(block(self.inplanes, planes, stride,
                             downsample, dilation=dilation))
         self.inplanes = planes * block.expansion
+        
+        # 添加剩余层这里是普通卷积，没有尺寸减半
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, dilation=dilation))
 
@@ -193,6 +240,7 @@ class ResNet(nn.Module):
         p3 = self.layer3(p2)
         p4 = self.layer4(p3)
         out = [x_, p1, p2, p3, p4]
+        # 对数据进行筛选
         out = [out[i] for i in self.used_layers]
         if len(out) == 1:
             return out[0]
@@ -217,8 +265,11 @@ def resnet34(**kwargs):
 
 
 def resnet50(**kwargs):
-    """Constructs a ResNet-50 model.
-
+    """
+    Constructs a ResNet-50 model.
+    注意这里使用的是瓶颈结构
+    Returns:
+        [array]: 对应layer类型数组，一般是[2,3,4]
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     return model
