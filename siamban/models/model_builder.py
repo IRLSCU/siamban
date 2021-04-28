@@ -16,14 +16,23 @@ from siamban.models.neck import get_neck
 
 
 class ModelBuilder(nn.Module):
+    """
+    模型创建工厂模式
+    主要包含 back、neck、head三种网络模型
+
+    Args:
+        nn ([type]): [description]
+    """
     def __init__(self):
         super(ModelBuilder, self).__init__()
 
         # build backbone
+        # 注意这里会返回layer2,3,4产生的512, 1024, 2048 通道的特征数组
         self.backbone = get_backbone(cfg.BACKBONE.TYPE,
                                      **cfg.BACKBONE.KWARGS)
 
         # build adjust layer
+        # 通道调整模块，主要是通过1x1卷积将所有特征都统一到一起
         if cfg.ADJUST.ADJUST:
             self.neck = get_neck(cfg.ADJUST.TYPE,
                                  **cfg.ADJUST.KWARGS)
@@ -34,9 +43,15 @@ class ModelBuilder(nn.Module):
                                      **cfg.BAN.KWARGS)
 
     def template(self, z):
+        """
+        提取模板对应的特征值
+        Args:
+            z ([type]): [description]
+        """
         zf = self.backbone(z)
         if cfg.ADJUST.ADJUST:
             zf = self.neck(zf)
+        # 计算最终特征值
         self.zf = zf
 
     def track(self, x):

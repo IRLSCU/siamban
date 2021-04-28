@@ -9,7 +9,18 @@ import torch.nn as nn
 
 
 class AdjustLayer(nn.Module):
+    """
+    通道调整函数
+    Args:
+        nn ([type]): [description]
+    """
     def __init__(self, in_channels, out_channels):
+        """
+        通道调整初始化函数
+        Args:
+            in_channels ([type]): 输入通道数
+            out_channels ([type]): 输出通道数
+        """
         super(AdjustLayer, self).__init__()
         self.downsample = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
@@ -18,6 +29,7 @@ class AdjustLayer(nn.Module):
 
     def forward(self, x):
         x = self.downsample(x)
+        # 如果宽度小于3进行扩张
         if x.size(3) < 20:
             l = 4
             r = l + 7
@@ -26,8 +38,14 @@ class AdjustLayer(nn.Module):
 
 
 class AdjustAllLayer(nn.Module):
+    """
+    主要是对输入数据进行下采样
+    Args:
+        nn ([type]): [description]
+    """
     def __init__(self, in_channels, out_channels):
         super(AdjustAllLayer, self).__init__()
+        # 需要输出的多个通道数目
         self.num = len(out_channels)
         if self.num == 1:
             self.downsample = AdjustLayer(in_channels[0], out_channels[0])

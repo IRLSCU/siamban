@@ -113,3 +113,8 @@ testing_dataset/
 training_dataset/
 experiments/
 pretrained_models/
+
+
+# docs
+docs/build/
+docs/source/modules

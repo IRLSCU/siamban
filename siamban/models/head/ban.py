@@ -10,6 +10,9 @@ import torch.nn.functional as F
 from siamban.core.xcorr import xcorr_fast, xcorr_depthwise
 
 class BAN(nn.Module):
+    """
+    BAN基础构造函数
+    """
     def __init__(self):
         super(BAN, self).__init__()
 
@@ -93,6 +96,7 @@ class MultiBAN(BAN):
     def __init__(self, in_channels, cls_out_channels, weighted=False):
         super(MultiBAN, self).__init__()
         self.weighted = weighted
+        # 根据通道数量进行模型添加
         for i in range(len(in_channels)):
             self.add_module('box'+str(i+2), DepthwiseBAN(in_channels[i], in_channels[i], cls_out_channels))
         if self.weighted:
@@ -105,6 +109,7 @@ class MultiBAN(BAN):
         loc = []
         for idx, (z_f, x_f) in enumerate(zip(z_fs, x_fs), start=2):
             box = getattr(self, 'box'+str(idx))
+            # 进行运算
             c, l = box(z_f, x_f)
             cls.append(c)
             loc.append(torch.exp(l*self.loc_scale[idx-2]))

@@ -82,6 +82,16 @@ python ../../tools/eval.py 	 \
 
 See [TRAIN.md](TRAIN.md) for detailed instruction.
 
+### build doc
+```shell
+# build docs
+./build_doc.sh
+# view static html
+cd docs/source
+python server.py
+# look html in https://ip:8000/index.html
+```
+
 ## License
 
 This project is released under the [Apache 2.0 license](LICENSE). 
