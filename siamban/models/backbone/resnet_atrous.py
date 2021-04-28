@@ -58,6 +58,115 @@ class BasicBlock(nn.Module):
 
         return out
 
+##""""
+##################################
+def split(x, groups):
+    out = x.chunk(groups, dim=1)
+
+    return out
+
+
+def shuffle(x, groups):
+    N, C, H, W = x.size()
+    out = x.view(N, groups, C // groups, H, W).permute(0, 2, 1, 3, 4).contiguous().view(N, C, H, W)
+
+    return out
+
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1,
+                 downsample=None, dilation=1):
+        super(Bottleneck, self).__init__()
+        mid_channels = planes // 2
+        print(inplanes)
+        print(mid_channels)
+        if stride > 1:
+            self.branch1 = nn.Sequential(
+             nn.Conv2d(inplanes, inplanes, 3, stride=stride, padding=1, groups=inplanes, bias=False, dilation=dilation),
+             nn.BatchNorm2d(inplanes),
+             nn.Conv2d(inplanes, mid_channels, 1, bias=False),
+             nn.BatchNorm2d(mid_channels),
+             nn.ReLU(inplace=True)
+            )
+
+            padding = 2 - stride
+            if downsample is not None and dilation > 1:
+                dilation = dilation // 2
+                padding = dilation
+
+            assert stride == 1 or dilation == 1, \
+                "stride and dilation must have one equals to zero at least"
+
+            if dilation > 1:
+                padding = dilation
+            self.branch2 = nn.Sequential(
+                nn.Conv2d(inplanes, mid_channels, 1, bias=False),
+                nn.BatchNorm2d(mid_channels),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(mid_channels, mid_channels, 3, stride=stride, padding=padding, groups=mid_channels, bias=False, dilation=dilation),
+                nn.BatchNorm2d(mid_channels),
+                nn.Conv2d(mid_channels, mid_channels, 1, bias=False),
+                nn.BatchNorm2d(mid_channels),
+                nn.ReLU(inplace=True)
+            )
+            self.downsample = downsample
+            self.stride = stride
+        else:
+            self.branch1 = nn.Sequential()
+            padding = 2 - stride
+            if downsample is not None and dilation > 1:
+                dilation = dilation // 2
+                padding = dilation
+
+            assert stride == 1 or dilation == 1, \
+                "stride and dilation must have one equals to zero at least"
+
+            if dilation > 1:
+                padding = dilation
+            self.branch2 = nn.Sequential(
+                nn.Conv2d(mid_channels, mid_channels, 1, bias=False),
+                nn.BatchNorm2d(mid_channels),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(mid_channels, mid_channels, 3, stride=stride, padding=padding, groups=mid_channels, bias=False, dilation=dilation),
+                nn.BatchNorm2d(mid_channels),
+                nn.Conv2d(mid_channels, mid_channels, 1, bias=False),
+                nn.BatchNorm2d(mid_channels),
+                nn.ReLU(inplace=True)
+            )
+
+            self.downsample = downsample
+            self.stride = stride
+        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+    def forward(self, x):
+        residual = x
+        if self.stride == 1:
+            x1, x2 = split(x, 2)
+            print(x1.shape)
+            print(x2.shape)
+            a1 = self.branch1(x1)
+            a2 = self.branch2(x2)
+            print(a1.shape)
+            print(a2.shape)
+            out = torch.cat((a1, a2), dim=1)
+        else:
+            out = torch.cat((self.branch1(x), self.branch2(x)), dim=1)
+        if self.downsample is not None:
+            residual = self.downsample(x)
+        # print(out.shape)
+        # print(residual.shape)
+
+#        out = self.relu(out)
+        out = shuffle(out, 2)
+        out = self.conv3(out)
+        out = self.bn3(out)
+        print(out.shape)
+        print(residual.shape)
+        out += residual
+        return out
+
+""""
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -108,7 +217,7 @@ class Bottleneck(nn.Module):
         out = self.relu(out)
 
         return out
-
+"""
 
 class ResNet(nn.Module):
     def __init__(self, block, layers, used_layers):
@@ -226,7 +335,7 @@ def resnet50(**kwargs):
 
 if __name__ == '__main__':
     net = resnet50(used_layers=[2, 3, 4])
-    print(net)
+    #print(net)
     net = net.cuda()
 
     template_var = torch.FloatTensor(1, 3, 127, 127).cuda()
