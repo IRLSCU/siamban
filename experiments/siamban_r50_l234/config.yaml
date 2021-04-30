@@ -4,7 +4,7 @@ BACKBONE:
     TYPE: "resnet50"
     KWARGS:
         used_layers: [2, 3, 4]
-    PRETRAINED: 'pretrained_models/resnet50.model'
+    PRETRAINED: '/media/node/8DB3FEE5663AE415/zsa/siamban/tools/pretrained_models/resnet50.model'
     TRAIN_LAYERS: ['layer2', 'layer3', 'layer4']
     TRAIN_EPOCH: 10
     LAYERS_LR: 0.1
@@ -43,7 +43,7 @@ TRACK:
 TRAIN:
     EPOCH: 20
     START_EPOCH: 0 # 0 or resume checkpoint
-    BATCH_SIZE: 28
+    BATCH_SIZE: 8
     BASE_LR: 0.005
     CLS_WEIGHT: 1.0
     LOC_WEIGHT: 1.0
@@ -64,12 +64,12 @@ TRAIN:
 
 DATASET:
     NAMES:
-    - 'VID'
-    - 'YOUTUBEBB'
     - 'COCO'
-    - 'DET'
-    - 'GOT10K'
-    - 'LASOT'
+#    - 'GOT10K'
+#    - 'VID'
+#    - 'YOUTUBEBB'
+#    - 'DET'
+#    - 'LASOT'
 
     VIDEOS_PER_EPOCH: 1000000
 

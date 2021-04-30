@@ -12,7 +12,7 @@ from os import listdir
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dir',type=str, default='./GOT_10k', help='your got_10k data dir')
+parser.add_argument('--dir',type=str, default='/media/node/8DB3FEE5663AE415/zsa/siamban/siamban/datasets/training_dataset/got_10k/GOT_10k', help='your got_10k data dir')
 args = parser.parse_args()
 
 got10k_base_path = args.dir

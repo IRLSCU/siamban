@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from siamban.models.backbone.alexnet import alexnetlegacy, alexnet
 from siamban.models.backbone.mobile_v2 import mobilenetv2
 from siamban.models.backbone.resnet_atrous import resnet18, resnet34, resnet50
+from siamban.models.backbone.layer_ops import *
 
 BACKBONES = {
               'alexnetlegacy': alexnetlegacy,
